@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة مؤشر كتلة الجسم ونطاق الوزن المثالي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .calculator-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+        }
+
+        .input-field,
+        .select-field {
+            border-radius: 0.5rem;
+            border: 1px solid #D1D5DB;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background-color: white;
+        }
+
+        .input-field:focus,
+        .select-field:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            outline: none;
+        }
+
+        .calculate-button {
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .result-display {
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .error-message {
+            color: #EF4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .unit-toggle label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .unit-toggle input[type="radio"]:checked+label {
+            background-color: #3B82F6;
+            color: white;
+            border-color: #3B82F6;
+        }
+
+        .unit-toggle input[type="radio"] {
+            display: none;
+        }
+
+        .reference-range {
+            font-size: 0.9rem;
+            color: #4B5563;
+        }
+
+        .ideal-weight-info {
+            background-color: #eff6ff;
+            /* blue-50 */
+            border-left: 4px solid #3b82f6;
+            /* blue-500 */
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-radius: 0.375rem;
+        }
+
+        .copyright {
+            font-size: 0.75rem;
+            /* 12px */
+            color: #6B7280;
+            /* gray-500 */
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-100 to-sky-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="calculator-card bg-white p-6 sm:p-8 max-w-lg w-full">
+        <h1 class="text-3xl font-bold text-center text-slate-700 mb-8">حاسبة مؤشر كتلة الجسم ونطاق الوزن المثالي</h1>
+
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-600 mb-2">نظام الوحدات:</label>
+            <div class="flex space-x-2 space-x-reverse unit-toggle">
+                <input type="radio" id="metric" name="unitSystem" value="metric" checked>
+                <label for="metric" class="flex-1 text-center">متري (سم، كجم)</label>
+
+                <input type="radio" id="imperial" name="unitSystem" value="imperial">
+                <label for="imperial" class="flex-1 text-center">إمبراطوري (قدم، بوصة، رطل)</label>
+            </div>
+        </div>
+
+        <div id="metricHeightDiv" class="mb-4">
+            <label for="heightCm" class="block text-sm font-medium text-slate-600 mb-1">الطول (سم)</label>
+            <input type="number" id="heightCm" class="input-field w-full" placeholder="أدخل طولك بالسنتيمتر">
+        </div>
+        <div id="imperialHeightDiv" class="mb-4 hidden">
+            <div class="flex space-x-2 space-x-reverse">
+                <div class="flex-1">
+                    <label for="heightFt" class="block text-sm font-medium text-slate-600 mb-1">الطول (قدم)</label>
+                    <input type="number" id="heightFt" class="input-field w-full" placeholder="قدم">
+                </div>
+                <div class="flex-1">
+                    <label for="heightIn" class="block text-sm font-medium text-slate-600 mb-1">الطول (بوصة)</label>
+                    <input type="number" id="heightIn" class="input-field w-full" placeholder="بوصة">
+                </div>
+            </div>
+        </div>
+        <p id="heightError" class="error-message hidden">الرجاء إدخال طول صحيح.</p>
+
+        <div id="metricWeightDiv" class="mb-4">
+            <label for="weightKg" class="block text-sm font-medium text-slate-600 mb-1">الوزن الحالي (كجم)</label>
+            <input type="number" id="weightKg" class="input-field w-full" placeholder="أدخل وزنك بالكيلوجرام">
+        </div>
+        <div id="imperialWeightDiv" class="mb-4 hidden">
+            <label for="weightLbs" class="block text-sm font-medium text-slate-600 mb-1">الوزن الحالي (رطل)</label>
+            <input type="number" id="weightLbs" class="input-field w-full" placeholder="أدخل وزنك بالرطل">
+        </div>
+        <p id="weightError" class="error-message hidden">الرجاء إدخال وزن صحيح.</p>
+
+        <div class="mb-4">
+            <label for="age" class="block text-sm font-medium text-slate-600 mb-1">العمر (سنوات)</label>
+            <input type="number" id="age" class="input-field w-full" placeholder="أدخل عمرك (مثال: 30)">
+            <p id="ageError" class="error-message hidden">الرجاء إدخال عمر صحيح (أكبر من 0).</p>
+        </div>
+
+        <div class="mb-6">
+            <label for="gender" class="block text-sm font-medium text-slate-600 mb-1">الجنس</label>
+            <select id="gender" class="select-field w-full">
+                <option value="male">ذكر</option>
+                <option value="female">أنثى</option>
+                <option value="other">أفضل عدم التحديد</option>
+            </select>
+        </div>
+
+        <button id="calculateBtn" class="calculate-button bg-sky-500 hover:bg-sky-600 text-white w-full">
+            احسب مؤشر كتلة الجسم والوزن المثالي
+        </button>
+
+        <div id="resultArea" class="result-display bg-slate-50 hidden mt-8">
+            <h2 class="text-xl font-semibold text-slate-700 mb-2">نتيجتك:</h2>
+            <p class="text-lg text-slate-700">مؤشر كتلة الجسم (BMI): <span id="bmiValue"
+                    class="text-3xl font-bold text-sky-600"></span></p>
+            <p id="bmiCategory" class="text-lg text-slate-600 mt-1"></p>
+            <p id="bmiMessage" class="text-sm text-slate-500 mt-3"></p>
+            <p id="ageGenderConsideration" class="text-sm text-slate-500 mt-2"></p>
+
+
+            <div class="ideal-weight-info mt-6">
+                <h3 class="text-md font-semibold text-slate-700 mb-1">نطاق الوزن المثالي المقترح لطولك:</h3>
+                <p id="idealWeightRange" class="text-lg font-bold text-sky-600"></p>
+                <p id="idealWeightMessage" class="text-xs text-slate-500 mt-1">
+                    يعتمد هذا النطاق على مؤشر كتلة جسم صحي (18.5 - 24.9).
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center reference-range">
+
+            <p class="text-xs mt-1">ملاحظة: هذه الحاسبة مخصصة للبالغين. تفسير مؤشر كتلة الجسم للأطفال والمراهقين يختلف
+                ويتطلب استشارة مختص.</p>
+        </div>
+
+        <div class="mt-8 text-center copyright">
+            <p>&copy; <span id="currentYear"></span> تطوير بواسطة أحمد يوسف. جميع الحقوق محفوظة.</p>
+        </div>
+
+        <div id="messageBox"
+            class="fixed top-5 left-5 right-auto bg-red-500 text-white p-4 rounded-lg shadow-lg hidden animate-pulse z-50"
+            style="transform: translateX(0);">
+            <p id="messageText"></p>
+            <button id="closeMessageBtn" class="mr-2 text-sm font-semibold float-left">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const heightCmInput = document.getElementById('heightCm');
+        const heightFtInput = document.getElementById('heightFt');
+        const heightInInput = document.getElementById('heightIn');
+        const weightKgInput = document.getElementById('weightKg');
+        const weightLbsInput = document.getElementById('weightLbs');
+        const ageInput = document.getElementById('age');
+        const genderSelect = document.getElementById('gender');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultArea = document.getElementById('resultArea');
+        const bmiValueDisplay = document.getElementById('bmiValue');
+        const bmiCategoryDisplay = document.getElementById('bmiCategory');
+        const bmiMessageDisplay = document.getElementById('bmiMessage');
+        const idealWeightRangeDisplay = document.getElementById('idealWeightRange');
+        const idealWeightMessageDisplay = document.getElementById('idealWeightMessage'); // New element for the message
+        const ageGenderConsiderationDisplay = document.getElementById('ageGenderConsideration');
+
+
+        const heightError = document.getElementById('heightError');
+        const weightError = document.getElementById('weightError');
+        const ageError = document.getElementById('ageError');
+
+        const metricUnitRadio = document.getElementById('metric');
+        const imperialUnitRadio = document.getElementById('imperial');
+        const metricHeightDiv = document.getElementById('metricHeightDiv');
+        const imperialHeightDiv = document.getElementById('imperialHeightDiv');
+        const metricWeightDiv = document.getElementById('metricWeightDiv');
+        const imperialWeightDiv = document.getElementById('imperialWeightDiv');
+
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const closeMessageBtn = document.getElementById('closeMessageBtn');
+        const currentYearSpan = document.getElementById('currentYear');
+
+        // Set current year in copyright
+        if (currentYearSpan) {
+            currentYearSpan.textContent = new Date().getFullYear();
+        }
+
+
+        function showMessage(message, type = 'error') {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-red-500', 'bg-green-500', 'bg-yellow-500');
+            if (type === 'error') messageBox.classList.add('bg-red-500');
+            else if (type === 'success') messageBox.classList.add('bg-green-500');
+            else if (type === 'warning') messageBox.classList.add('bg-yellow-500');
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('animate-pulse');
+            setTimeout(hideMessage, 7000);
+        }
+
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+            messageBox.classList.remove('animate-pulse');
+        }
+        closeMessageBtn.addEventListener('click', hideMessage);
+
+        function updateUnitSystemView() {
+            const isMetric = metricUnitRadio.checked;
+            metricHeightDiv.classList.toggle('hidden', !isMetric);
+            metricWeightDiv.classList.toggle('hidden', !isMetric);
+            imperialHeightDiv.classList.toggle('hidden', isMetric);
+            imperialWeightDiv.classList.toggle('hidden', isMetric);
+
+            heightCmInput.value = '';
+            heightFtInput.value = '';
+            heightInInput.value = '';
+            weightKgInput.value = '';
+            weightLbsInput.value = '';
+            resultArea.classList.add('hidden');
+        }
+        metricUnitRadio.addEventListener('change', updateUnitSystemView);
+        imperialUnitRadio.addEventListener('change', updateUnitSystemView);
+        updateUnitSystemView();
+
+        calculateBtn.addEventListener('click', () => {
+            heightError.classList.add('hidden');
+            weightError.classList.add('hidden');
+            ageError.classList.add('hidden');
+            resultArea.classList.add('hidden');
+
+            const age = parseFloat(ageInput.value);
+            const gender = genderSelect.value;
+            let isValid = true;
+
+            if (isNaN(age) || age <= 0) {
+                ageError.textContent = 'الرجاء إدخال عمر صحيح (يجب أن يكون أكبر من 0).';
+                ageError.classList.remove('hidden');
+                isValid = false;
+            } else if (age < 18) {
+                showMessage('هذه الحاسبة مصممة للبالغين (18 عامًا فما فوق). قد لا تكون النتائج دقيقة للأطفال والمراهقين، ولكن سيتم عرضها كمرجع عام.', 'warning');
+            }
+
+            let heightInCm, weightInKg;
+
+            if (metricUnitRadio.checked) {
+                heightInCm = parseFloat(heightCmInput.value);
+                weightInKg = parseFloat(weightKgInput.value);
+                if (isNaN(heightInCm) || heightInCm <= 0) {
+                    heightError.textContent = 'الرجاء إدخال طول صحيح بالسنتيمتر (أكبر من 0).';
+                    heightError.classList.remove('hidden');
+                    isValid = false;
+                }
+                if (isNaN(weightInKg) || weightInKg <= 0) {
+                    weightError.textContent = 'الرجاء إدخال وزن صحيح بالكيلوجرام (أكبر من 0).';
+                    weightError.classList.remove('hidden');
+                    isValid = false;
+                }
+            } else { // Imperial units
+                const heightFt = parseFloat(heightFtInput.value);
+                const heightIn = parseFloat(heightInInput.value);
+                const weightLbs = parseFloat(weightLbsInput.value);
+
+                if (isNaN(heightFt) || heightFt < 0 || isNaN(heightIn) || heightIn < 0 || (heightFt === 0 && heightIn === 0 && !heightCmInput.value)) {
+                    heightError.textContent = 'الرجاء إدخال طول صحيح بالقدم والبوصة.';
+                    heightError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    heightInCm = ((isNaN(heightFt) ? 0 : heightFt) * 30.48) + ((isNaN(heightIn) ? 0 : heightIn) * 2.54);
+                    if (heightInCm <= 0) {
+                        heightError.textContent = 'الرجاء إدخال طول صحيح (أكبر من 0).';
+                        heightError.classList.remove('hidden');
+                        isValid = false;
+                    }
+                }
+
+                if (isNaN(weightLbs) || weightLbs <= 0) {
+                    weightError.textContent = 'الرجاء إدخال وزن صحيح بالرطل (أكبر من 0).';
+                    weightError.classList.remove('hidden');
+                    isValid = false;
+                } else {
+                    weightInKg = weightLbs / 2.20462;
+                }
+            }
+
+            if (!isValid) {
+                showMessage('الرجاء تصحيح القيم المدخلة.', 'error');
+                return;
+            }
+
+            const heightInMeters = heightInCm / 100;
+            const bmi = weightInKg / (heightInMeters * heightInMeters);
+            bmiValueDisplay.textContent = bmi.toFixed(2);
+
+            let category = '', message = '', categoryColorClass = '';
+            if (bmi < 18.5) {
+                category = 'نقص الوزن';
+                message = 'قد تحتاج إلى زيادة بعض الوزن.';
+                categoryColorClass = 'text-blue-500';
+            } else if (bmi >= 18.5 && bmi < 24.9) {
+                category = 'وزن طبيعي';
+                message = 'تهانينا! وزنك ضمن النطاق الصحي.';
+                categoryColorClass = 'text-green-500';
+            } else if (bmi >= 25 && bmi < 29.9) {
+                category = 'زيادة الوزن';
+                message = 'قد تحتاج إلى خسارة بعض الوزن.';
+                categoryColorClass = 'text-yellow-600';
+            } else if (bmi >= 30 && bmi < 34.9) {
+                category = 'سمنة (الدرجة الأولى)';
+                message = 'صحتك قد تكون في خطر.';
+                categoryColorClass = 'text-orange-500';
+            } else if (bmi >= 35 && bmi < 39.9) {
+                category = 'سمنة (الدرجة الثانية)';
+                message = 'أنت في خطر كبير للإصابة بمشاكل صحية.';
+                categoryColorClass = 'text-red-500';
+            } else {
+                category = 'سمنة (الدرجة الثالثة) / سمنة مفرطة';
+                message = 'صحتك في خطر كبير جدًا.';
+                categoryColorClass = 'text-red-700';
+            }
+            bmiCategoryDisplay.textContent = category;
+            bmiCategoryDisplay.className = `text-lg font-semibold mt-1 ${categoryColorClass}`;
+            bmiMessageDisplay.textContent = message + " استشر مقدم الرعاية الصحية دائمًا للحصول على تقييم شامل ونصيحة شخصية.";
+
+            let ageGenderText = "بشكل عام، يمكن أن يؤثر العمر على توزيع الدهون وكتلة العضلات، كما أن هناك اختلافات طبيعية في تكوين الجسم بين الرجال والنساء. ";
+            ageGenderText += "هذه العوامل مهمة عند تقييم الوزن الصحي بشكل شامل.";
+            if (age >= 65) {
+                ageGenderText += " بالنسبة لكبار السن (65 عامًا فأكثر)، قد يكون من المقبول أحيانًا نطاق أعلى قليلاً لمؤشر كتلة الجسم. ";
+            }
+            ageGenderText += " استشر طبيبك للحصول على تقييم دقيق لحالتك.";
+            ageGenderConsiderationDisplay.textContent = ageGenderText;
+
+
+            const minIdealWeight = 18.5 * (heightInMeters * heightInMeters);
+            const maxIdealWeight = 24.9 * (heightInMeters * heightInMeters);
+            idealWeightRangeDisplay.textContent = `${minIdealWeight.toFixed(1)} كجم - ${maxIdealWeight.toFixed(1)} كجم`;
+
+            idealWeightMessageDisplay.textContent = `يعتمد هذا النطاق على مؤشر كتلة جسم صحي (18.5 - 24.9). يُعد العمر والجنس من العوامل الهامة التي تؤثر على تكوين الجسم (مثل نسبة العضلات والدهون) وبالتالي على الوزن المثالي الفعلي. هذا النطاق هو تقدير عام، وللحصول على تقييم شخصي دقيق، يُنصح دائمًا باستشارة أخصائي رعاية صحية.`;
+
+            resultArea.classList.remove('hidden');
+            resultArea.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        [heightCmInput, weightKgInput, ageInput, heightFtInput, heightInInput, weightLbsInput].forEach(input => {
+            input.addEventListener('input', () => {
+                const value = parseFloat(input.value);
+                const isHeightField = input.id.includes('height');
+
+                if ((isHeightField && value >= 0) || (!isHeightField && value > 0)) {
+                    if (input === heightCmInput || input === heightFtInput || input === heightInInput) heightError.classList.add('hidden');
+                    if (input === weightKgInput || input === weightLbsInput) weightError.classList.add('hidden');
+                    if (input === ageInput) ageError.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
